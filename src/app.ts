@@ -5,6 +5,8 @@ import http from 'http';
 import routes from './routes';
 import { getPort } from './config';
 import logger from './utils/logger';
+import { handleUnifyAiRequest } from './agents/unifyAiAgent';
+import express from 'express';
 
 const port = getPort();
 
@@ -28,3 +30,17 @@ server.listen(port, () => {
 });
 
 startWebSocketServer(server);
+
+app.post('/api/unify', async (req, res) => {
+  const { content } = req.body;
+  try {
+      const response = await handleUnifyAiRequest(content);
+      res.json({ response });
+  } catch (error) {
+      console.error(`Error in Unify.ai request: ${error}`);
+      res.status(500).json({ error: error.message });
+  }
+});
+
+
+

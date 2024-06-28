@@ -6,6 +6,8 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getUnifyApiKey, // Import the Unify.ai API key getter
+  getUnifyApiEndpoint // Import the Unify.ai API endpoint getter
 } from '../config';
 import logger from '../utils/logger';
 
@@ -13,6 +15,8 @@ export const getAvailableChatModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const unifyApiKey = getUnifyApiKey(); // Get the Unify.ai API key
+  const unifyEndpoint = getUnifyApiEndpoint(); // Get the Unify.ai API endpoint
 
   const models = {};
 
@@ -94,30 +98,21 @@ export const getAvailableChatModelProviders = async () => {
     }
   }
 
-  if (ollamaEndpoint) {
+  if (unifyApiKey && unifyEndpoint) {
     try {
-      const response = await fetch(`${ollamaEndpoint}/api/tags`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const unifyOpenAI = new ChatOpenAI({
+        openAIApiKey: unifyApiKey,
+        baseURL: unifyEndpoint,
       });
 
-      const { models: ollamaModels } = (await response.json()) as any;
-
-      models['ollama'] = ollamaModels.reduce((acc, model) => {
-        acc[model.model] = new ChatOllama({
-          baseUrl: ollamaEndpoint,
-          model: model.model,
-          temperature: 0.7,
-        });
-        return acc;
-      }, {});
+      models['unify'] = {
+        'LLaMA-3 8B': unifyOpenAI,
+        // Add more Unify.ai models as needed
+      };
     } catch (err) {
-      logger.error(`Error loading Ollama models: ${err}`);
+      logger.error(`Error loading Unify.ai models: ${err}`);
     }
   }
-
-  models['custom_openai'] = {};
 
   return models;
 };
